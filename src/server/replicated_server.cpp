@@ -4,6 +4,7 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <string.h>
+#include <cpp_redis/cpp_redis>
 
 using boost::optional;
 using namespace std;
@@ -29,6 +30,9 @@ private:
     void create();
     void serve();
     void handle_request(int client_fd);
+    int connect_to_redis();
+    string recv_msg(int fd);
+    void send_msg(int fd, string msg);
 };
 
 ReplicatedServer::ReplicatedServer(int port, optional<pair<string, int>> prev_server, optional<pair<string, int>> next_server) {
@@ -129,15 +133,17 @@ ReplicatedServer::handle_request(int client_fd) {
 
 int
 ReplicatedServer::connect_to_redis() {
+    cpp_redis::client client;
+    cout << "Created Client!" << endl;
 }
 
 string
 ReplicatedServer::recv_msg(int fd) {
     //Reads and returns the request from the client. Handles protocol
     string msg = "";
-    char buf = new char[MAX_VAL_SIZE];
+    char* buf = new char[MAX_VAL_SIZE];
     while (msg.length() == 0 or msg[msg.length()-1] != '\n') {
-        int nread = read(fd, buf, MAX_VAL_SIZE);
+        int nread = read(fd, (void *) buf, MAX_VAL_SIZE);
         msg.append(buf, nread);
     }
     return msg;
