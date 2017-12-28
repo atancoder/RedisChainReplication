@@ -1,11 +1,25 @@
 cmake_minimum_required (VERSION 3.0)
 
-add_executable(replicated_server replicated_server.cpp)
-add_dependencies(replicated_server cpp_redis) #Ensure that cpp_redis library is built first (target names are global throughout the build tree)
+# Make this a library (not global) so that we can use it for testing
+add_library(replicated_server replicated_server.cpp)
+set_target_properties(replicated_server
+    PROPERTIES
+    INTERFACE_LINK_LIBRARIES cpp_redis
+    )
+
+# Main is the executable that actually runs the server
+add_executable(main main.cpp)
 
 # Very important that we link only after we specify the app creation (add_executable)
 # target_link_libraries creates the -l flag in the g++ compiler (in our case, -lcpp_redis)
-target_link_libraries(replicated_server
-    cpp_redis
-)
+target_link_libraries(main
+    replicated_server
+    )
 
+# Testing
+add_executable(test_replicated_server test_replicated_server.cpp)
+target_link_libraries(test_replicated_server
+    replicated_server
+    gtest
+    )
+add_test(test_replicated_server test_replicated_server)

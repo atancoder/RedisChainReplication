@@ -32,14 +32,12 @@ endif()
 set(CPP_REDIS_INCLUDE_DIRS "${SOURCE_DIR}/includes; ${SOURCE_DIR}/tacopie/includes" PARENT_SCOPE)
 
 # Make cpp_redis a target library that can be referred to in other files
-add_library(cpp_redis STATIC IMPORTED GLOBAL) 
-
-# Ensure that redis_client is built before cpp_redis is declared as a library
-add_dependencies(cpp_redis redis_client) 
+# We use imported and set the location later because the .a file doesn't exist until after we build
+add_library(cpp_redis STATIC IMPORTED GLOBAL) #GLOBAL allows us to refer to it in other directories
 
 #Sets the imported_location property to be the libcpp_redis.a file. This is a required property, since this library must be associated with a file, which is provided with the IMPORTED_LOCATION property
 set_target_properties(cpp_redis # The target library
-    PROPERTIES 
+    PROPERTIES
     IMPORTED_LOCATION ${CPP_REDIS_LIBRARY}
     INTERFACE_LINK_LIBRARIES "${TACOPIE_LIBRARY};pthread" #This property contains a list of dependent libraries needed to be linked with the target library. So if you link cpp_redis, you are also linking tacopie and pthread
     )
