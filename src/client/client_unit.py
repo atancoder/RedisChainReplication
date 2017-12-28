@@ -1,17 +1,17 @@
 import unittest
 from unittest.mock import patch, MagicMock
-from client.client import Client
+from client import Client
 
 class TestClientMethods(unittest.TestCase):
 
-    @patch('client.client.Client.connect_to_master')
+    @patch('client.Client.connect_to_master')
     def setUp(self, mock_method):
         self.client = Client()
 
     def tearDown(self):
         self.client.master_socket.close()
 
-    @patch('client.client.socket')
+    @patch('client.socket')
     def test_master_connection(self, socket_mod):
         """
         Test that the client calls connect to the Master Server

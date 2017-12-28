@@ -21,8 +21,15 @@ ExternalProject_Get_Property(redis_client BINARY_DIR)
 
 # We want to establish the location of the library files
 set(CPP_REDIS_LIBRARY ${BINARY_DIR}/lib/libcpp_redis.a)
-set(TACOPIE_LIBRARY ${BINARY_DIR}/lib/libtacopie.a) 
-# Must make sure tacopie isn't already in the path of the computer. Otherwise this fails because cpp_redis disables add_subdirectory(tacopie)
+find_library(TACOPIE_LIBRARY tacopie)
+if (NOT TACOPIE_LIBRARY)
+    # Must make sure tacopie isn't already in the path of the computer. Otherwise this fails because cpp_redis won't create the libtacopie.a
+    set(TACOPIE_LIBRARY ${BINARY_DIR}/lib/libtacopie.a)
+endif()
+
+# We set this variable so that we can add it to the include_directories
+# We add the tacopie includes by adding a semicolon separator
+set(CPP_REDIS_INCLUDE_DIRS "${SOURCE_DIR}/includes; ${SOURCE_DIR}/tacopie/includes" PARENT_SCOPE)
 
 # Make cpp_redis a target library that can be referred to in other files
 add_library(cpp_redis STATIC IMPORTED GLOBAL) 
