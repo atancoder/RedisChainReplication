@@ -19,8 +19,6 @@ ExternalProject_Add(redis_client
 ExternalProject_Get_Property(redis_client SOURCE_DIR)
 ExternalProject_Get_Property(redis_client BINARY_DIR)
 
-#set(CPP_REDIS_INCLUDE_DIRS ${SOURCE_DIR}/include PARENT_SCOPE)
-
 # We want to establish the location of the library files
 set(CPP_REDIS_LIBRARY ${BINARY_DIR}/lib/libcpp_redis.a)
 set(TACOPIE_LIBRARY ${BINARY_DIR}/lib/libtacopie.a) 
@@ -29,7 +27,7 @@ set(TACOPIE_LIBRARY ${BINARY_DIR}/lib/libtacopie.a)
 # Make cpp_redis a target library that can be referred to in other files
 add_library(cpp_redis STATIC IMPORTED GLOBAL) 
 
-# Ensure that redis_client is built before cpp_redis
+# Ensure that redis_client is built before cpp_redis is declared as a library
 add_dependencies(cpp_redis redis_client) 
 
 #Sets the imported_location property to be the libcpp_redis.a file. This is a required property, since this library must be associated with a file, which is provided with the IMPORTED_LOCATION property
