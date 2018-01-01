@@ -10,5 +10,7 @@ ExternalProject_Add(googletest
 )
 ExternalProject_Get_Property(googletest SOURCE_DIR)
 ExternalProject_Get_Property(googletest BINARY_DIR)
+
+# Set gtest_include_dirs as a global property that can be accessed anywhere in the cmake build. (More powerful than Parent_scope). We can use parent_scope in this scenario as an alternative
 set(GTEST_INCLUDE_DIRS ${SOURCE_DIR}/googletest/include PARENT_SCOPE)
 set(GTEST_LIBS_DIR ${BINARY_DIR}/googlemock/gtest PARENT_SCOPE)

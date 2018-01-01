@@ -2,10 +2,7 @@ cmake_minimum_required (VERSION 3.0)
 
 # Make this a library (not global) so that we can use it for testing
 add_library(replicated_server replicated_server.cpp)
-set_target_properties(replicated_server
-    PROPERTIES
-    INTERFACE_LINK_LIBRARIES cpp_redis
-    )
+target_link_libraries(replicated_server cpp_redis RepServer_client)
 
 # Main is the executable that actually runs the server
 add_executable(main main.cpp)

@@ -7,12 +7,16 @@
 #include <sys/socket.h>
 #include <string.h>
 #include <cpp_redis/cpp_redis>
+#include <vector>
+#include <RepServer_client.pb.h> // Google protobuf
 
 using boost::optional;
 using namespace std;
 
-#define PORT 1337
 #define MAX_VAL_SIZE 1024
+
+// Define our own static parse function
+void parse_client_request(string, vector<string>&);
 
 class ReplicatedServer
 {
@@ -20,6 +24,13 @@ class ReplicatedServer
 public:
     ReplicatedServer (int port, optional<pair<string, int>> prev_server, optional<pair<string, int>> next_server);
     void run();
+    void create();
+    void serve();
+    void handle_request(int client_fd);
+    void connect_to_redis();
+    string recv_msg(int fd);
+    void send_msg(int fd, string msg);
+    string send_redis_cmd(string request);
 
 private:
     int server_fd_;
@@ -30,10 +41,5 @@ private:
     fd_set readfds_;
     optional<pair<string, int>> prev_server_;
     optional<pair<string, int>> next_server_;
-    void create();
-    void serve();
-    void handle_request(int client_fd);
-    int connect_to_redis();
-    string recv_msg(int fd);
-    void send_msg(int fd, string msg);
+    cpp_redis::client redis_client_;
 };

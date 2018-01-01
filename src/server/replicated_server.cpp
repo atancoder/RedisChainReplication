@@ -1,5 +1,18 @@
 #include "replicated_server.h"
 
+void
+parse_client_request(string request, vector<string>& redis_args) {
+    // modifies redis_args destructively by taking a reference variable
+    size_t start = 0;
+    size_t next = 0;
+    while ((next = request.find(" ", start)) != std::string::npos) {
+        redis_args.push_back(request.substr(start, next-start));
+        start = next + 1;
+    }
+    // Add tail
+    redis_args.push_back(request.substr(start));
+}
+
 ReplicatedServer::ReplicatedServer(int port, optional<pair<string, int>> prev_server, optional<pair<string, int>> next_server) {
     port_ = port;
     prev_server_ = prev_server;
@@ -9,7 +22,13 @@ ReplicatedServer::ReplicatedServer(int port, optional<pair<string, int>> prev_se
 void
 ReplicatedServer::run() {
     create();
+    connect_to_redis();
     serve();
+}
+void ReplicatedServer::connect_to_redis() {
+    cpp_redis::client redis_client_;
+    redis_client_.connect();
+    cout << "Connected to redis server!\n";
 }
 
 void
@@ -53,7 +72,6 @@ ReplicatedServer::create() {
 
 void
 ReplicatedServer::serve() {
-    cout << "Done creating. Now let's serve!" << endl;
     FD_ZERO(&readfds_);
     // Add server socket to set
     FD_SET(server_fd_, &readfds_);
@@ -81,6 +99,17 @@ ReplicatedServer::serve() {
     }
 }
 
+string
+ReplicatedServer::send_redis_cmd(string request) {
+    vector<string> redis_args;
+    parse_client_request(request, redis_args);
+    redis_client_.send(redis_args, [&](cpp_redis::reply& reply) {
+        cout<<reply;
+    });
+    redis_client_.sync_commit();
+    return "success";
+}
+
 void
 ReplicatedServer::handle_request(int client_fd) {
     /*
@@ -90,16 +119,8 @@ ReplicatedServer::handle_request(int client_fd) {
      * Send client back the message from the redis server
      */
     string request = recv_msg(client_fd);
-    int redis_fd = connect_to_redis();
-    send_msg(redis_fd, request);
-    string response = recv_msg(redis_fd);
-    send_msg(client_fd, response);
-}
-
-int
-ReplicatedServer::connect_to_redis() {
-    cpp_redis::client client;
-    cout << "Created Client!" << endl;
+    string reply = send_redis_cmd(request);
+    send_msg(client_fd, reply);
 }
 
 string
@@ -117,4 +138,5 @@ ReplicatedServer::recv_msg(int fd) {
 void
 ReplicatedServer::send_msg(int fd, string msg) {
     //Sends the msg through the socket. Handles the protocol
+    msg += "\n";
 }

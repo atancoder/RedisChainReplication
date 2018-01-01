@@ -27,7 +27,7 @@ if (NOT TACOPIE_LIBRARY)
     set(TACOPIE_LIBRARY ${BINARY_DIR}/lib/libtacopie.a)
 endif()
 
-# We set this variable so that we can add it to the include_directories
+# We set this variable so that we can add it to the include_directories in the CMake file above
 # We add the tacopie includes by adding a semicolon separator
 set(CPP_REDIS_INCLUDE_DIRS "${SOURCE_DIR}/includes; ${SOURCE_DIR}/tacopie/includes" PARENT_SCOPE)
 
