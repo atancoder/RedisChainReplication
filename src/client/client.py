@@ -34,22 +34,16 @@ class Client:
         Have a threat listen in the background for any updates from the master
         """
 
-    def send_request(self, request, server=None, client_socket=None):
+    def send_request(self, request, client_socket):
         """
         Sends request to server over tcp
         Protocol is to send len of message + space + message
         """
         request = str(len(request)) + ' ' + request
-        if client_socket == None:
-            client_socket = socket.socket()
-            client_socket.connect(server)
         client_socket.sendall(request.encode())
 
-    def wait_for_reply(self, client_socket=None, server=None):
-        if client_socket == None:
-            client_socket = socket.socket()
-            client_socket.connect(server)
-        reply = client_socket.recv(self.max_val_size)
+    def wait_for_reply(self, client_socket):
+        reply = client_socket.recv(self.max_val_size).decode()
         separator = reply.find(' ')
         msg_len = int(reply[:separator])
         reply = reply[separator+1:]
@@ -67,20 +61,26 @@ class Client:
         obj = command_args[1]
         HEAD_server, TAIL_server = self.get_servers(obj)
 
+        tail_socket = socket.socket()
+        tail_socket.connect(TAIL_server)
         # Send request
         if action.lower() == "get":
-            self.send_request(string_command, server=TAIL_server)
+            self.send_request(string_command, tail_socket)
         elif action.lower() == "set":
-            self.send_request(string_command, server=HEAD_server)
+            if HEAD_server == TAIL_server:
+                head_socket = tail_socket
+            else:
+                head_socket = socket.socket()
+                head_socket.connect(HEAD_server)
+            self.send_request(string_command, head_socket)
 
-        import pdb; pdb.set_trace()
         # Listen to TAIL for reply
-        reply = self.wait_for_reply(server=TAIL_server)
+        reply = self.wait_for_reply(tail_socket)
         return reply
 
 if __name__ == '__main__':
     c = Client()
-    redis_command = input()
+    redis_command = input(">> ")
     while (redis_command):
         print(c.command(redis_command))
-        redis_command = input()
+        redis_command = input(">> ")
