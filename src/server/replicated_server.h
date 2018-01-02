@@ -7,7 +7,7 @@
 #include <sys/socket.h>
 #include <string.h>
 #include <cpp_redis/cpp_redis>
-#include <vector>
+#include <set>
 #include <RepServer_client.pb.h> // Google protobuf
 
 using boost::optional;
@@ -28,16 +28,15 @@ public:
     void serve();
     void handle_request(int client_fd);
     void connect_to_redis();
-    string recv_msg(int fd);
+    bool recv_msg(int fd, string& msg);
     void send_msg(int fd, string msg);
     string send_redis_cmd(string request);
 
 private:
     int server_fd_;
     int port_;
-    int max_fd_;
     pair<string, int> redis_addr_;
-    vector<int> client_fds_;
+    set<int> client_fds_;
     fd_set readfds_;
     optional<pair<string, int>> prev_server_;
     optional<pair<string, int>> next_server_;

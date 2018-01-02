@@ -17,6 +17,7 @@ TEST_F(ReplicatedServerTest, send_msg) {
     EXPECT_EQ(1, 1);
 }
 
+/* Deprecated Tests
 TEST(ParseTest, get_request) {
     vector<string> redis_args;
     string request = "GET K1";
@@ -35,6 +36,7 @@ TEST(ParseTest, set_request) {
     EXPECT_EQ("K1", redis_args[1]);
     EXPECT_EQ("V1", redis_args[2]);
 }
+*/
 
 int main(int argc, char** argv) {
     ::testing::InitGoogleTest(&argc, argv);

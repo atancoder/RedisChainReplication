@@ -26,7 +26,6 @@ ReplicatedServer::run() {
     serve();
 }
 void ReplicatedServer::connect_to_redis() {
-    cpp_redis::client redis_client_;
     redis_client_.connect();
     cout << "Connected to redis server!\n";
 }
@@ -43,7 +42,6 @@ ReplicatedServer::create() {
 
     // create socket
     server_fd_ = socket(PF_INET,SOCK_STREAM,0);
-    max_fd_ = server_fd_;
     if (!server_fd_) {
         perror("socket");
         exit(-1);
@@ -72,12 +70,14 @@ ReplicatedServer::create() {
 
 void
 ReplicatedServer::serve() {
-    FD_ZERO(&readfds_);
-    // Add server socket to set
-    FD_SET(server_fd_, &readfds_);
-
     while (true) {
-        int ready_fd = select( max_fd_ + 1 , &readfds_, NULL , NULL , NULL);
+        FD_ZERO(&readfds_);
+        // Add server socket to set
+        FD_SET(server_fd_, &readfds_);
+        for (const auto client_fd: client_fds_) {
+            FD_SET(client_fd, &readfds_);
+        }
+        int ready_fd = select( FD_SETSIZE , &readfds_, NULL , NULL , NULL);
         if (FD_ISSET(server_fd_, &readfds_)) {
             //set up client structure
             int client_fd;
@@ -86,7 +86,8 @@ ReplicatedServer::serve() {
 
             // Handle incoming connection request
             client_fd = accept(server_fd_, (struct sockaddr *)&client_addr, &clientlen);
-            client_fds_.push_back(client_fd);
+            client_fds_.insert(client_fd);
+            cout << "Connected to a client!" << endl;
         } else {
             // Hanlde client request
             // Better way than loooping through all connections?
@@ -103,11 +104,12 @@ string
 ReplicatedServer::send_redis_cmd(string request) {
     vector<string> redis_args;
     parse_client_request(request, redis_args);
+    string response;
     redis_client_.send(redis_args, [&](cpp_redis::reply& reply) {
-        cout<<reply;
+        response = reply.as_string();
     });
     redis_client_.sync_commit();
-    return "success";
+    return response;
 }
 
 void
@@ -118,25 +120,50 @@ ReplicatedServer::handle_request(int client_fd) {
      * Sends it to the local redis server
      * Send client back the message from the redis server
      */
-    string request = recv_msg(client_fd);
-    string reply = send_redis_cmd(request);
-    send_msg(client_fd, reply);
+    cout << "Handling client request\n";
+    string request = "";
+    bool success = recv_msg(client_fd, request);
+    if (success) {
+        string reply = send_redis_cmd(request);
+        send_msg(client_fd, reply);
+    } else {
+        // remove client
+        close(client_fd);
+        client_fds_.erase(client_fd);
+    }
 }
 
-string
-ReplicatedServer::recv_msg(int fd) {
+bool
+ReplicatedServer::recv_msg(int fd, string& msg) {
     //Reads and returns the request from the client. Handles protocol
-    string msg = "";
-    char* buf = new char[MAX_VAL_SIZE];
-    while (msg.length() == 0 or msg[msg.length()-1] != '\n') {
-        int nread = read(fd, (void *) buf, MAX_VAL_SIZE);
+    char* buf = new char[MAX_VAL_SIZE]; // Heap memory
+    int nread = read(fd, (void *) buf, MAX_VAL_SIZE);
+    if (nread == 0) {
+        // The other side closed their socket
+        delete buf;
+        return false;
+    }
+    msg.append(buf, nread);
+    int separator = msg.find(" ");
+    int msg_len = stoi(msg.substr(0, separator));
+    msg = msg.substr(separator+1);
+
+    while (msg.length() < msg_len) {
+        nread = read(fd, (void *) buf, msg_len - msg.length());
         msg.append(buf, nread);
     }
-    return msg;
+    delete buf;
+    return true;
 }
 
 void
 ReplicatedServer::send_msg(int fd, string msg) {
     //Sends the msg through the socket. Handles the protocol
-    msg += "\n";
+    msg = to_string(msg.length()) + " " + msg;
+    const char* buf = msg.c_str(); // Stack memory
+    int written = 0;
+    while (written < msg.length()) {
+        written += write(fd, buf, msg.length() - written);
+        buf += written;
+    }
 }

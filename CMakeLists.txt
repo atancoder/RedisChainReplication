@@ -2,7 +2,7 @@ cmake_minimum_required (VERSION 3.0)
 
 project(redis_chain_replication)
 
-set(CMAKE_CXX_FLAGS_COMMON "-std=c++11")
+set(CMAKE_CXX_FLAGS_COMMON "-std=c++11 -w")
 
 SET(CMAKE_CXX_FLAGS_DEBUG
     "${CMAKE_CXX_FLAGS_DEBUG} \

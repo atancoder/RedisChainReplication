@@ -3,7 +3,7 @@
 #define PORT 1337
 int main()
 {
-    Request request;
+    GOOGLE_PROTOBUF_VERIFY_VERSION;
     ReplicatedServer s (PORT, optional<pair<string, int>>{}, optional<pair<string, int>>{});
     s.run();
     return 0;
