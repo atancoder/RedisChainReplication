@@ -47,7 +47,7 @@ class TestClientMethods(unittest.TestCase):
         # Mock a server that sends in bursts
         client_socket = MagicMock()
         orig_msg = 'hello there!'
-        msg = orig_msg + '\n'
+        msg = str(len(orig_msg)) + ' ' + orig_msg
 
         def send_replies(arg):
             nonlocal msg
@@ -57,6 +57,11 @@ class TestClientMethods(unittest.TestCase):
 
         client_socket.recv = MagicMock(side_effect=send_replies)
         self.assertEqual(self.client.wait_for_reply(client_socket), orig_msg)
+
+    def test_send_request(self):
+        client_socket = MagicMock()
+        self.client.send_request("hello!", client_socket = client_socket)
+        client_socket.sendall.assert_called_once_with("6 hello!")
 
 if __name__ == '__main__':
     unittest.main()

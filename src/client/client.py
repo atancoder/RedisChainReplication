@@ -4,11 +4,11 @@ MAX_VAL_SIZE = 1024
 MASTER_ADDR = ('localhost', 1337)
 class Client:
     def __init__(self):
-        self.objID_servers = {}
+        self.objID_servers = {"k1": (('localhost', 1337), ('localhost', 1337))} # Maps obj -> (Head server, Tail server) May be sockets
         self.max_val_size = MAX_VAL_SIZE
         self.master_addr = MASTER_ADDR
-        self.master_socket = socket.socket()
-        self.connect_to_master()
+        #self.master_socket = socket.socket()
+        #self.connect_to_master()
 
     def connect_to_master(self):
         self.master_socket.connect(self.master_addr)
@@ -37,24 +37,27 @@ class Client:
     def send_request(self, request, server=None, client_socket=None):
         """
         Sends request to server over tcp
-        Adds a newline to the request to symbolize end of command
+        Protocol is to send len of message + space + message
         """
-        request += '\n'
+        request = str(len(request)) + ' ' + request
         if client_socket == None:
             client_socket = socket.socket()
             client_socket.connect(server)
-        client_socket.sendall(request)
+        client_socket.sendall(request.encode())
 
     def wait_for_reply(self, client_socket=None, server=None):
         if client_socket == None:
-            s = socket.socket()
-            s.connect(server)
-        reply = ""
-        while len(reply) == 0 or reply[len(reply)-1] != '\n':
-            reply += client_socket.recv(self.max_val_size)
-        return reply[:len(reply)-1] #Remove the newline character
+            client_socket = socket.socket()
+            client_socket.connect(server)
+        reply = client_socket.recv(self.max_val_size)
+        separator = reply.find(' ')
+        msg_len = int(reply[:separator])
+        reply = reply[separator+1:]
+        while len(reply) < msg_len:
+            reply += client_socket.recv(msg_len - len(reply))
+        return reply
 
-    def command(string_command):
+    def command(self, string_command):
         """
         Sends the string command to the appropriate server (HEAD or TAIL)
         Listens on the TAIL server for reply
@@ -70,6 +73,7 @@ class Client:
         elif action.lower() == "set":
             self.send_request(string_command, server=HEAD_server)
 
+        import pdb; pdb.set_trace()
         # Listen to TAIL for reply
         reply = self.wait_for_reply(server=TAIL_server)
         return reply
