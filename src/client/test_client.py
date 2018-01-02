@@ -53,15 +53,15 @@ class TestClientMethods(unittest.TestCase):
             nonlocal msg
             msg_to_send = msg[:3]
             msg = msg[3:]
-            return msg_to_send
+            return msg_to_send.encode()
 
         client_socket.recv = MagicMock(side_effect=send_replies)
         self.assertEqual(self.client.wait_for_reply(client_socket), orig_msg)
 
     def test_send_request(self):
         client_socket = MagicMock()
-        self.client.send_request("hello!", client_socket = client_socket)
-        client_socket.sendall.assert_called_once_with("6 hello!")
+        self.client.send_request("hello!", client_socket)
+        client_socket.sendall.assert_called_once_with("6 hello!".encode())
 
 if __name__ == '__main__':
     unittest.main()

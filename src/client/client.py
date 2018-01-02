@@ -1,14 +1,15 @@
 import socket
 import json
 MAX_VAL_SIZE = 1024
-MASTER_ADDR = ('localhost', 1337)
+MASTER_ADDR = ('localhost', 1338)
+REP_SERVER_ADDR = ('localhost', 1337)
 class Client:
     def __init__(self):
-        self.objID_servers = {"k1": (('localhost', 1337), ('localhost', 1337))} # Maps obj -> (Head server, Tail server) May be sockets
+        self.objID_servers = {"test_key": (REP_SERVER_ADDR, REP_SERVER_ADDR)} # Maps obj -> (Head server, Tail server) 
         self.max_val_size = MAX_VAL_SIZE
         self.master_addr = MASTER_ADDR
-        #self.master_socket = socket.socket()
-        #self.connect_to_master()
+        self.master_socket = socket.socket()
+        self.connect_to_master()
 
     def connect_to_master(self):
         self.master_socket.connect(self.master_addr)
@@ -48,7 +49,7 @@ class Client:
         msg_len = int(reply[:separator])
         reply = reply[separator+1:]
         while len(reply) < msg_len:
-            reply += client_socket.recv(msg_len - len(reply))
+            reply += client_socket.recv(msg_len - len(reply)).decode()
         return reply
 
     def command(self, string_command):
