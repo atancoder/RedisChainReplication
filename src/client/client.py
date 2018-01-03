@@ -5,11 +5,12 @@ MASTER_ADDR = ('localhost', 1338)
 REP_SERVER_ADDR = ('localhost', 1337)
 class Client:
     def __init__(self):
-        self.objID_servers = {"test_key": (REP_SERVER_ADDR, REP_SERVER_ADDR)} # Maps obj -> (Head server, Tail server) 
+        self.objID_addr = {"test_key": (REP_SERVER_ADDR, REP_SERVER_ADDR)} # Maps obj -> (Head server addr, Tail server addr) 
+        self.addr_to_socket = {} # Maps addr to socket (if exists)
         self.max_val_size = MAX_VAL_SIZE
         self.master_addr = MASTER_ADDR
         self.master_socket = socket.socket()
-        self.connect_to_master()
+        #self.connect_to_master()
 
     def connect_to_master(self):
         self.master_socket.connect(self.master_addr)
@@ -62,17 +63,19 @@ class Client:
         obj = command_args[1]
         HEAD_server, TAIL_server = self.get_servers(obj)
 
-        tail_socket = socket.socket()
-        tail_socket.connect(TAIL_server)
+        if not TAIL_server in self.addr_to_socket:
+            self.addr_to_socket[TAIL_server] = socket.socket()
+            self.addr_to_socket[TAIL_server].connect(TAIL_server)
+        tail_socket = self.addr_to_socket[TAIL_server]
+
         # Send request
         if action.lower() == "get":
             self.send_request(string_command, tail_socket)
         elif action.lower() == "set":
-            if HEAD_server == TAIL_server:
-                head_socket = tail_socket
-            else:
-                head_socket = socket.socket()
-                head_socket.connect(HEAD_server)
+            if not HEAD_server in self.addr_to_socket:
+                self.addr_to_socket[HEAD_server] = socket.socket()
+                self.addr_to_socket[HEAD_server].connect(HEAD_server)
+            head_socket = self.addr_to_socket[HEAD_server]
             self.send_request(string_command, head_socket)
 
         # Listen to TAIL for reply
