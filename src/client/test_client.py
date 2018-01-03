@@ -24,7 +24,7 @@ class TestClientMethods(unittest.TestCase):
     def test_get_servers_with_loaded_cache(self):
         def raise_exception():
             raise Exception('send_request should not be called')
-        with patch.dict(self.client.objID_servers, {'k1':'server1', 'k2':'server2'}):
+        with patch.dict(self.client.objID_to_addr, {'k1':'server1', 'k2':'server2'}):
             self.client.send_request = MagicMock(side_effect=raise_exception)
             self.assertEqual(self.client.get_servers('k1'), 'server1')
             self.assertEqual(self.client.get_servers('k2'), 'server2')

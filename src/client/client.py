@@ -10,7 +10,7 @@ class Client:
         self.max_val_size = MAX_VAL_SIZE
         self.master_addr = MASTER_ADDR
         self.master_socket = socket.socket()
-        #self.connect_to_master()
+        self.connect_to_master()
 
     def connect_to_master(self):
         self.master_socket.connect(self.master_addr)
