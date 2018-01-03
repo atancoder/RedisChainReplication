@@ -78,6 +78,7 @@ ReplicatedServer::serve() {
             FD_SET(client_fd, &readfds_);
         }
         int ready_fd = select( FD_SETSIZE , &readfds_, NULL , NULL , NULL);
+        // select removes fds that aren't ready for reading from readfds_
         if (FD_ISSET(server_fd_, &readfds_)) {
             //set up client structure
             int client_fd;
@@ -88,13 +89,11 @@ ReplicatedServer::serve() {
             client_fd = accept(server_fd_, (struct sockaddr *)&client_addr, &clientlen);
             client_fds_.insert(client_fd);
             cout << "Connected to a client!" << endl;
-        } else {
-            // Hanlde client request
-            // Better way than loooping through all connections?
-            for (const auto client_fd: client_fds_) {
-                if (FD_ISSET(client_fd, &readfds_)) {
-                    handle_request(client_fd);
-                }
+        }
+        // Handle client request
+        for (const auto client_fd: client_fds_) {
+            if (FD_ISSET(client_fd, &readfds_)) {
+                handle_request(client_fd);
             }
         }
     }
@@ -128,6 +127,7 @@ ReplicatedServer::handle_request(int client_fd) {
         send_msg(client_fd, reply);
     } else {
         // remove client
+        // Should we unset the bit?
         close(client_fd);
         client_fds_.erase(client_fd);
     }

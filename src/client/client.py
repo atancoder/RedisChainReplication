@@ -5,7 +5,7 @@ MASTER_ADDR = ('localhost', 1338)
 REP_SERVER_ADDR = ('localhost', 1337)
 class Client:
     def __init__(self):
-        self.objID_addr = {"test_key": (REP_SERVER_ADDR, REP_SERVER_ADDR)} # Maps obj -> (Head server addr, Tail server addr) 
+        self.objID_to_addr = {"test_key": (REP_SERVER_ADDR, REP_SERVER_ADDR)} # Maps obj -> (Head server addr, Tail server addr) 
         self.addr_to_socket = {} # Maps addr to socket (if exists)
         self.max_val_size = MAX_VAL_SIZE
         self.master_addr = MASTER_ADDR
@@ -21,15 +21,15 @@ class Client:
         Otherwise, asks master for the HEAD/TAIL server associated with the objID
         Return HEAD server, TAIL server
         """
-        if not obj in self.objID_servers:
+        if not obj in self.objID_to_addr:
             request = obj
             self.send_request(request,client_socket=self.master_socket)
             reply = self.wait_for_reply(client_socket=self.master_socket)
             reply = json.loads(reply)
             head_addr = tuple(i for i in reply['HEAD'])
             tail_addr = tuple(i for i in reply['TAIL'])
-            self.objID_servers[obj] = (head_addr, tail_addr)
-        return self.objID_servers[obj]
+            self.objID_to_addr[obj] = (head_addr, tail_addr)
+        return self.objID_to_addr[obj]
 
     def background_check_for_master_update(self):
         """
