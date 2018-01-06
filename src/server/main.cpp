@@ -4,7 +4,7 @@
 int main()
 {
     GOOGLE_PROTOBUF_VERIFY_VERSION;
-    ReplicatedServer s (PORT, optional<pair<string, int>>{}, optional<pair<string, int>>{});
+    ReplicatedServer s (PORT, optional<pair<string, int>>{});
     s.run();
     return 0;
 }

@@ -1,44 +1,29 @@
 #pragma once //Ensures this file is only compiled once
 
-#include <iostream>
-#include <string>
-#include <boost/optional.hpp>
-#include <netinet/in.h>
-#include <sys/socket.h>
-#include <string.h>
+#include "server.h"
 #include <cpp_redis/cpp_redis>
-#include <set>
 #include <RepServer_client.pb.h> // Google protobuf
 
 using boost::optional;
 using namespace std;
 
-#define MAX_VAL_SIZE 1024
-
 // Define our own static parse function
-void parse_client_request(string, vector<string>&);
+void parse_client_request(string request, vector<string>& redis_args);
 
-class ReplicatedServer
+class ReplicatedServer : public Server
 {
 
 public:
-    ReplicatedServer (int port, optional<pair<string, int>> prev_server, optional<pair<string, int>> next_server);
-    void run();
-    void create();
-    void serve();
+    ReplicatedServer (int port, optional<pair<string, int>> next_server);
     void handle_request(int client_fd);
-    void connect_to_redis();
-    bool recv_msg(int fd, string& msg);
-    void send_msg(int fd, string msg);
+    bool is_tail_server();
+    void update_prev_server_existance(bool has_prev_server);
     string send_redis_cmd(string request);
+    ~ReplicatedServer() {};
 
 private:
-    int server_fd_;
-    int port_;
     pair<string, int> redis_addr_;
-    set<int> client_fds_;
-    fd_set readfds_;
-    optional<pair<string, int>> prev_server_;
-    optional<pair<string, int>> next_server_;
+    bool has_prev_server_;
+    int next_server_fd_;
     cpp_redis::client redis_client_;
 };
