@@ -25,6 +25,7 @@ link_directories(${GTEST_LIBS_DIR})
 # Tells the compiler where to look for header files
 include_directories(${CPP_REDIS_INCLUDE_DIRS})
 include_directories(${GTEST_INCLUDE_DIRS})
+include_directories(${GMOCK_INCLUDE_DIRS})
 # We use get_property because we stored the property globally
 get_property(GENERATED_PROTOBUF_INCLUDE_DIR GLOBAL PROPERTY GENERATED_PROTOBUF_DIRS)
 include_directories(${GENERATED_PROTOBUF_INCLUDE_DIR})
