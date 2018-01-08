@@ -18,12 +18,12 @@ public:
     void handle_request(int client_fd);
     bool is_tail_server();
     void update_prev_server_existance(bool has_prev_server);
-    string send_redis_cmd(string request);
+    virtual string send_redis_cmd(Request request);
     ~ReplicatedServer() {};
+    int next_server_fd_;
 
 private:
     pair<string, int> redis_addr_;
     bool has_prev_server_;
-    int next_server_fd_;
     cpp_redis::client redis_client_;
 };

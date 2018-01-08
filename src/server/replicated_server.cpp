@@ -1,5 +1,4 @@
 #include "replicated_server.h"
-#include "server.h"
 
 ReplicatedServer::ReplicatedServer(int port, optional<pair<string, int>> next_server): Server(port) {
     has_prev_server_ = false;
@@ -19,10 +18,13 @@ void ReplicatedServer::update_prev_server_existance(bool has_prev_server) {
 }
 
 string
-ReplicatedServer::send_redis_cmd(string request) {
-    vector<string> redis_args;
-    parse_client_request(request, redis_args);
+ReplicatedServer::send_redis_cmd(Request request) {
+    vector<string> redis_args = {request.cmd(), request.key()};
+    if (request.has_val()) {
+        redis_args.push_back(request.val());
+    }
     string response;
+    cout << "Sending redis cmd: " << redis_args[0] << " " << redis_args[1] << endl;
     redis_client_.send(redis_args, [&](cpp_redis::reply& reply) {
         response = reply.as_string();
     });
@@ -39,17 +41,21 @@ ReplicatedServer::handle_request(int client_fd) {
      * Send client back the message from the redis server
      */
     cout << "Handling client request\n";
-    string request = "";
-    bool success = recv_msg(client_fd, request);
+    string request_str = "";
+    bool success = recv_msg(client_fd, request_str);
     if (success) {
-        string reply = send_redis_cmd(request);
-        if (true) { // Use google protobuf
+        //Convert request to protobuf object
+        Request request;
+        if (request.ParseFromString(request_str)) {
+            string reply = send_redis_cmd(request);
             if (is_tail_server()) {
                 send_msg(client_fd, reply);
             } else {
                 // Send the request to the next server. Make sure to pass the original client's address. Good time to use Protobuf
-                send_msg(next_server_fd_, request);
+                send_msg(next_server_fd_, request_str);
             }
+        } else {
+            cout << "Invalid request format\n";
         }
     }
 }
