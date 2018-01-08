@@ -19,5 +19,8 @@ add_executable(test_replicated_server test_replicated_server.cpp)
 target_link_libraries(test_replicated_server
     replicated_server
     gtest
+    gtest_main
+    gmock
+    gmock_main
     )
 add_test(test_replicated_server test_replicated_server)

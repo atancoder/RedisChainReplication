@@ -20,6 +20,7 @@ add_subdirectory(src/proto)
 # Link Library Directory
 # Similar to -L in g++ compiler. We use this if we didn't create a target_library (ie we didn't create a library for the .a file) and want to link in the application's CMakeLists.txt file
 link_directories(${GTEST_LIBS_DIR})
+link_directories(${GMOCK_LIBS_DIR})
 
 # Include
 # Tells the compiler where to look for header files
