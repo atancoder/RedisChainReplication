@@ -13,8 +13,15 @@ bool ReplicatedServer::is_tail_server() {
     return next_server_fd_ == -1;
 }
 
-void ReplicatedServer::update_prev_server_existance(bool has_prev_server) {
+void ReplicatedServer::update_has_prev_server(bool has_prev_server) {
     has_prev_server_ = has_prev_server;
+}
+
+void ReplicatedServer::update_next_server(pair<string, int> next_server) {
+    if (next_server_fd_ > 0) {
+        close(next_server_fd_);
+    }
+    next_server_fd_ = connect_to_server(next_server.first, next_server.second);
 }
 
 string

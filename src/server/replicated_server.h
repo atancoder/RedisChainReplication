@@ -17,6 +17,8 @@ public:
     void update_prev_server_existance(bool has_prev_server);
     virtual string send_redis_cmd(Request request);
     virtual int get_client_fd(string host, int port);
+    virtual void update_next_server(pair<string, int> next_server);
+    virtual void update_has_prev_server(bool has_prev_server);
     ~ReplicatedServer() {};
     int next_server_fd_;
 
