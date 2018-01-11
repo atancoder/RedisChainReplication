@@ -3,12 +3,36 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 
+#define CLIENT_ADDR "localhost"
+#define CLIENT_PORT -10
+#define NEXT_SERVER_FD 777
+#define TAIL_PORT 1337
+#define HEAD_PORT 1338
+
 class ReplicatedServerTest : public ::testing::Test {
-protected:
+public:
+    static string set_request;
+    static string get_request;
     virtual void SetUp() {
-        tail_server = new MockReplicatedServer(1337, optional<pair<string, int>>{});
-        pair<string, int> tail_addr("localhost", 1337);
-        head_server = new MockReplicatedServer(1338, optional<pair<string, int>>{tail_addr});
+        tail_server = new MockReplicatedServer(TAIL_PORT, optional<pair<string, int>>{});
+        pair<string, int> tail_addr("localhost", TAIL_PORT);
+        head_server = new MockReplicatedServer(HEAD_PORT, optional<pair<string, int>>{tail_addr});
+
+        Request set_r;
+        set_r.set_client_addr(CLIENT_ADDR);
+        set_r.set_client_port(CLIENT_PORT);
+        set_r.set_cmd("set");
+        set_r.set_key("k1");
+        set_r.set_val("v1");
+
+        Request get_r;
+        get_r.set_client_addr(CLIENT_ADDR);
+        get_r.set_client_port(CLIENT_PORT);
+        get_r.set_cmd("get");
+        get_r.set_key("k1");
+
+        set_r.SerializeToString(&set_request);
+        get_r.SerializeToString(&get_request);
     }
 
     virtual void TearDown() {
@@ -19,39 +43,23 @@ protected:
     MockReplicatedServer* head_server;
 };
 
-bool mock_recv_msg_set(int fd, string& msg) {
-    Request request;
-    request.set_cmd("set");
-    request.set_key("k1");
-    request.set_val("v1");
-    return request.SerializeToString(&msg);
-}
-
-bool mock_recv_msg_get(int fd, string& msg) {
-    Request request;
-    request.set_cmd("get");
-    request.set_key("k1");
-    return request.SerializeToString(&msg);
-}
+string ReplicatedServerTest::get_request;
+string ReplicatedServerTest::set_request;
 
 TEST_F(ReplicatedServerTest, tail_handle_request) {
-    // Sends set msg to tail server
-    EXPECT_CALL(*tail_server, recv_msg(::testing::_, ::testing::_)).WillOnce(testing::Invoke(mock_recv_msg_set)).WillOnce(testing::Invoke(mock_recv_msg_get)); // '_' means any argument
-    EXPECT_CALL(*tail_server, send_redis_cmd(::testing::_)).Times(2).WillRepeatedly(testing::Invoke(tail_server,&MockReplicatedServer::do_redis_cmd));
-    EXPECT_CALL(*tail_server, send_msg(3, "OK")).Times(1);
-    EXPECT_CALL(*tail_server, send_msg(5, "v1")).Times(1);
+    // Sends set msg to tail server. Verifies we can obtain the value right after
+    EXPECT_CALL(*tail_server, send_msg(CLIENT_PORT, "OK")).Times(1);
+    EXPECT_CALL(*tail_server, send_msg(CLIENT_PORT, "v1")).Times(1);
 
-    tail_server->handle_request(3); //set k1 v1
-    tail_server->handle_request(5); //get k1
+    tail_server->handle_request(ReplicatedServerTest::set_request); //set k1 v1
+    tail_server->handle_request(ReplicatedServerTest::get_request); //get k1
 }
 
 TEST_F(ReplicatedServerTest, head_handle_request) {
-    EXPECT_CALL(*head_server, recv_msg(::testing::_, ::testing::_)).WillOnce(testing::Invoke(mock_recv_msg_set)); // '_' means any argument
-    EXPECT_CALL(*head_server, send_redis_cmd(::testing::_)).Times(1).WillRepeatedly(testing::Invoke(head_server,&MockReplicatedServer::do_redis_cmd));
-    EXPECT_CALL(*head_server, send_msg(3, "OK")).Times(1);
-    //EXPECT_CALL(*head_server, send_msg(head_server->next_server_fd_, SET_REQUEST)).Times(1);
+    // Sends a set messsage to the head server
+    EXPECT_CALL(*head_server, send_msg(head_server->next_server_fd_, ReplicatedServerTest::set_request)).Times(1);
 
-    head_server->handle_request(3); //set k1 v1
+    head_server->handle_request(ReplicatedServerTest::set_request); //set k1 v1
 }
 
 //Mock redis_client

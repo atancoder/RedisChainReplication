@@ -7,15 +7,12 @@
 using boost::optional;
 using namespace std;
 
-// Define our own static parse function
-void parse_client_request(string request, vector<string>& redis_args);
-
 class ReplicatedServer : public Server
 {
 
 public:
     ReplicatedServer (int port, optional<pair<string, int>> next_server);
-    void handle_request(int client_fd);
+    void handle_request(string request_str);
     bool is_tail_server();
     void update_prev_server_existance(bool has_prev_server);
     virtual string send_redis_cmd(Request request);
@@ -25,5 +22,6 @@ public:
 private:
     pair<string, int> redis_addr_;
     bool has_prev_server_;
+    int get_client_fd(string addr, int port);
     cpp_redis::client redis_client_;
 };

@@ -3,6 +3,7 @@
 #include <iostream>
 #include <string>
 #include <netinet/in.h>
+#include <netdb.h>
 #include <sys/socket.h>
 #include <string.h>
 #include <set>
@@ -19,8 +20,9 @@ public:
     virtual void send_msg(int fd, string msg);
     virtual void serve();
     virtual void run();
-    virtual void handle_request(int client_fd);
+    virtual void handle_request(string request_str);
     virtual void create_server_socket();
+    virtual int connect_to_server(string host, int port);
     virtual ~Server() {}
 
 private:

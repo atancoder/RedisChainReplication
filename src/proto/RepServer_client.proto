@@ -5,9 +5,11 @@ https://github.com/ucbrise/cpp_project_template/blob/master/src/proto/api.proto
 
 //Request from client to replicated server
 message Request {
-  required string cmd = 1; //Get or Set
-  required string key = 2;
-  optional string val = 3;
+  required string client_addr = 1;
+  required int32 client_port = 2;
+  required string cmd = 3; //Get or Set
+  required string key = 4;
+  optional string val = 5;
 }
 
 // A reply from the replicated server.

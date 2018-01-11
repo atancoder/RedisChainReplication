@@ -73,14 +73,19 @@ Server::serve() {
         // Handle client request
         for (const auto client_fd: client_fds_) {
             if (FD_ISSET(client_fd, &readfds_)) {
-                handle_request(client_fd);
+                cout << "Handling client request\n";
+                string request_str = "";
+                bool success = recv_msg(client_fd, request_str);
+                if (success) {
+                  handle_request(request_str);
+                }
             }
         }
     }
 }
 
 void
-Server::handle_request(int client_fd) {
+Server::handle_request(string request_str) {
     cout << "Must be implemented by subclass\n";
 }
 
@@ -120,4 +125,24 @@ Server::send_msg(int fd, string msg) {
         written += write(fd, buf, msg.length() - written);
         buf += written;
     }
+}
+
+int
+Server::connect_to_server(string host, int port) {
+    int server_fd;
+    struct sockaddr_in server_addr;
+
+    struct hostent *hostEntry;
+    hostEntry = gethostbyname(host.c_str());
+
+    // setup socket address structure
+    memset(&server_addr,0,sizeof(server_addr));
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(port);
+    memcpy(&server_addr.sin_addr, hostEntry->h_addr_list[0], hostEntry->h_length);
+
+    // create socket
+    server_fd = socket(PF_INET,SOCK_STREAM,0);
+    connect(server_fd,(const struct sockaddr *)&server_addr,sizeof(server_addr));
+    return server_fd;
 }

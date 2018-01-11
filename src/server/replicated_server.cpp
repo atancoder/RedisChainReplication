@@ -4,7 +4,7 @@ ReplicatedServer::ReplicatedServer(int port, optional<pair<string, int>> next_se
     has_prev_server_ = false;
     next_server_fd_ = -1;
     if (next_server) {
-      cout << "Not yet implemented\n";
+        next_server_fd_ = connect_to_server(next_server.value().first, next_server.value().second);
     }
     redis_client_.connect();
 }
@@ -32,43 +32,27 @@ ReplicatedServer::send_redis_cmd(Request request) {
     return response;
 }
 
-void
-ReplicatedServer::handle_request(int client_fd) {
-    /*
-     * Receives the client request
-     * Establishes connection with the redis server
-     * Sends it to the local redis server
-     * Send client back the message from the redis server
-     */
-    cout << "Handling client request\n";
-    string request_str = "";
-    bool success = recv_msg(client_fd, request_str);
-    if (success) {
-        //Convert request to protobuf object
-        Request request;
-        if (request.ParseFromString(request_str)) {
-            string reply = send_redis_cmd(request);
-            if (is_tail_server()) {
-                send_msg(client_fd, reply);
-            } else {
-                // Send the request to the next server. Make sure to pass the original client's address. Good time to use Protobuf
-                send_msg(next_server_fd_, request_str);
-            }
-        } else {
-            cout << "Invalid request format\n";
-        }
-    }
+int
+ReplicatedServer::get_client_fd(string addr, int port) {
+    // Traverse all clients to find the associated fd
+    return -10;
 }
 
 void
-parse_client_request(string request, vector<string>& redis_args) {
-    // modifies redis_args destructively by taking a reference variable
-    size_t start = 0;
-    size_t next = 0;
-    while ((next = request.find(" ", start)) != std::string::npos) {
-        redis_args.push_back(request.substr(start, next-start));
-        start = next + 1;
+ReplicatedServer::handle_request(string request_str) {
+    //Convert request to protobuf object
+    Request request;
+    if (request.ParseFromString(request_str)) {
+        string reply = send_redis_cmd(request);
+        if (is_tail_server()) {
+            int client_fd = get_client_fd(request.client_addr(), request.client_port());
+            send_msg(client_fd, reply);
+        } else {
+            // Send the request to the next server. Make sure to pass the original client's address. Good time to use Protobuf
+            send_msg(next_server_fd_, request_str);
+        }
+    } else {
+        cout << "Invalid request format\n";
     }
-    // Add tail
-    redis_args.push_back(request.substr(start));
 }
+
