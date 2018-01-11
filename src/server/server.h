@@ -4,6 +4,7 @@
 #include <string>
 #include <netinet/in.h>
 #include <netdb.h>
+#include <arpa/inet.h>
 #include <sys/socket.h>
 #include <string.h>
 #include <set>
@@ -25,7 +26,7 @@ public:
     virtual int connect_to_server(string host, int port);
     virtual ~Server() {}
 
-private:
+protected:
     int server_fd_;
     int port_;
     fd_set readfds_;

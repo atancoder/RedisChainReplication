@@ -1,7 +1,8 @@
 #include "gmock/gmock.h"
 #define CLIENT_ADDR "localhost"
-#define CLIENT_PORT -10
-#define NEXT_SERVER_FD 777
+#define CLIENT_PORT 1339
+#define CLIENT_FD 1
+#define NEXT_SERVER_FD 2
 #define TAIL_PORT 1337
 #define HEAD_PORT 1338
 using ::testing::_;
@@ -19,6 +20,7 @@ public:
     MOCK_METHOD2(recv_msg, bool(int fd, string& msg));
     MOCK_METHOD2(send_msg, void(int fd, string msg));
     MOCK_METHOD2(connect_to_server, int(string host, int port));
+    MOCK_METHOD2(get_client_fd, int(string host, int port));
 };
 
 string MockReplicatedServer::do_redis_cmd(Request request) {

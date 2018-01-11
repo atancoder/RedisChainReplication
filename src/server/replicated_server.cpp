@@ -33,9 +33,19 @@ ReplicatedServer::send_redis_cmd(Request request) {
 }
 
 int
-ReplicatedServer::get_client_fd(string addr, int port) {
+ReplicatedServer::get_client_fd(string host, int port) {
     // Traverse all clients to find the associated fd
-    return -10;
+    struct sockaddr_in client_addr;
+    socklen_t client_len = sizeof(client_addr);
+    for (const auto client_fd: client_fds_) {
+       getsockname(client_fd, (struct sockaddr *) &client_addr, &client_len);
+       string client_host = inet_ntoa(client_addr.sin_addr);
+       int client_port = ntohs(client_addr.sin_port);
+       if (client_host == host and port == client_port) {
+           return client_fd;
+       }
+    }
+    return -1; //Couldn't find associated connection
 }
 
 void

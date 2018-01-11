@@ -3,12 +3,6 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 
-#define CLIENT_ADDR "localhost"
-#define CLIENT_PORT -10
-#define NEXT_SERVER_FD 777
-#define TAIL_PORT 1337
-#define HEAD_PORT 1338
-
 class ReplicatedServerTest : public ::testing::Test {
 public:
     static string set_request;
@@ -48,8 +42,9 @@ string ReplicatedServerTest::set_request;
 
 TEST_F(ReplicatedServerTest, tail_handle_request) {
     // Sends set msg to tail server. Verifies we can obtain the value right after
-    EXPECT_CALL(*tail_server, send_msg(CLIENT_PORT, "OK")).Times(1);
-    EXPECT_CALL(*tail_server, send_msg(CLIENT_PORT, "v1")).Times(1);
+    EXPECT_CALL(*tail_server, send_msg(CLIENT_FD, "OK")).Times(1);
+    EXPECT_CALL(*tail_server, send_msg(CLIENT_FD, "v1")).Times(1);
+    EXPECT_CALL(*tail_server, get_client_fd(CLIENT_ADDR, CLIENT_PORT)).Times(2).WillRepeatedly(Return(CLIENT_FD));
 
     tail_server->handle_request(ReplicatedServerTest::set_request); //set k1 v1
     tail_server->handle_request(ReplicatedServerTest::get_request); //get k1
