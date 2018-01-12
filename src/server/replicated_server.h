@@ -13,17 +13,16 @@ class ReplicatedServer : public Server
 public:
     ReplicatedServer (int port, optional<pair<string, int>> next_server);
     void handle_request(string request_str);
+    void handle_redis_request(Request::RedisRequest request, string orig_request_str);
+    void handle_master_request(Request::MasterRequest request);
     bool is_tail_server();
-    void update_prev_server_existance(bool has_prev_server);
-    virtual string send_redis_cmd(Request request);
+    virtual string send_redis_cmd(Request::RedisRequest request);
     virtual int get_client_fd(string host, int port);
     virtual void update_next_server(pair<string, int> next_server);
-    virtual void update_has_prev_server(bool has_prev_server);
     ~ReplicatedServer() {};
     int next_server_fd_;
 
 private:
     pair<string, int> redis_addr_;
-    bool has_prev_server_;
     cpp_redis::client redis_client_;
 };
