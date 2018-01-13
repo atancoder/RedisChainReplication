@@ -12,11 +12,15 @@ bool ReplicatedServer::is_tail_server() {
     return next_server_fd_ == -1;
 }
 
-void ReplicatedServer::update_next_server(pair<string, int> next_server) {
+void ReplicatedServer::update_next_server(optional<pair<string, int>> next_server) {
     if (next_server_fd_ > 0) {
         close(next_server_fd_);
     }
-    next_server_fd_ = connect_to_server(next_server.first, next_server.second);
+    if (next_server) {
+        next_server_fd_ = connect_to_server(next_server.value().first, next_server.value().second);
+    } else {
+        next_server_fd_ = -1;
+    }
 }
 
 string
@@ -54,7 +58,7 @@ void
 ReplicatedServer::handle_redis_request(Request::RedisRequest request, string orig_request_str) {
     string redis_reply = send_redis_cmd(request);
     if (is_tail_server()) {
-        int client_fd = get_client_fd(request.client_addr(), request.client_port());
+        int client_fd = get_client_fd(request.client_addr().host(), request.client_addr().port());
         string reply_str;
         Reply reply;
         reply.set_key(request.key());

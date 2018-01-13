@@ -10,16 +10,22 @@ message Request {
     MASTER = 1;
   }
 
+  message Address {
+    required string host = 1;
+    required int32 port = 2;
+  }
+
   message RedisRequest {
-      required string client_addr = 1;
-      required int32 client_port = 2;
-      required string cmd = 3; //Get or Set
-      required string key = 4;
-      optional string val = 5;
+      required Address client_addr = 1;
+      required string cmd = 2; //Get or Set
+      required string key = 3;
+      optional string val = 4;
   }
 
   message MasterRequest {
+    optional Address next_server_addr = 1;
   }
+
   required RequestType type = 1;
   optional RedisRequest redis = 2;
   optional MasterRequest master = 3;

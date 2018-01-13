@@ -18,11 +18,11 @@ public:
     bool is_tail_server();
     virtual string send_redis_cmd(Request::RedisRequest request);
     virtual int get_client_fd(string host, int port);
-    virtual void update_next_server(pair<string, int> next_server);
+    virtual void update_next_server(optional<pair<string, int>> next_server);
     ~ReplicatedServer() {};
-    int next_server_fd_;
 
 private:
+    int next_server_fd_;
     pair<string, int> redis_addr_;
     cpp_redis::client redis_client_;
 };
