@@ -70,6 +70,11 @@ ReplicatedServer::handle_redis_request(Request::RedisRequest request, string ori
 
 void
 ReplicatedServer::handle_master_request(Request::MasterRequest request) {
+    if (request.has_next_server_addr()) {
+        string host = request.next_server_addr().host();
+        int port = request.next_server_addr().port();
+        update_next_server(optional<pair<string, int>> {make_pair(host, port)});
+    }
 }
 
 void

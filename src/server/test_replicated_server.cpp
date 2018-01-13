@@ -73,10 +73,10 @@ TEST_F(ReplicatedServerTest, tail_handle_request) {
 }
 
 TEST_F(ReplicatedServerTest, modify_tail_server) {
-    tail_server->update_next_server(optional<pair<string, int>> {make_pair("localhost", TAIL_PORT+1)});
-    EXPECT_CALL(*tail_server, send_msg(CLIENT_FD, "OK")).Times(0);
-    EXPECT_CALL(*tail_server, send_msg(NEXT_SERVER_FD, ReplicatedServerTest::set_request)).Times(1);
+    EXPECT_CALL(*tail_server, connect_to_server("localhost", TAIL_PORT+1)).WillOnce(Return(NEXT_SERVER_FD+1));
+    EXPECT_CALL(*tail_server, send_msg(NEXT_SERVER_FD+1, ReplicatedServerTest::set_request)).Times(1);
 
+    tail_server->update_next_server(optional<pair<string, int>> {make_pair("localhost", TAIL_PORT+1)});
     tail_server->handle_request(ReplicatedServerTest::set_request);
 }
 
@@ -85,18 +85,27 @@ TEST_F(ReplicatedServerTest, head_handle_request) {
     EXPECT_CALL(*head_server, send_msg(NEXT_SERVER_FD, ReplicatedServerTest::set_request)).Times(1);
     head_server->handle_request(ReplicatedServerTest::set_request); //set k1 v1
 }
-/*
+
 TEST_F(ReplicatedServerTest, master_update_next_server) {
+    // Set up the Master Request
+    Request::Address* next_server_addr = new Request::Address;
+    next_server_addr->set_host("localhost");
+    next_server_addr->set_port(HEAD_PORT+1);
+
     Request::MasterRequest* master_req = new Request::MasterRequest;
-    master_req.set
+    master_req->set_allocated_next_server_addr(next_server_addr);
+
     Request r;
     r.set_type(Request::MASTER);
     r.set_allocated_master(master_req);
     string request_str;
     r.SerializeToString(&request_str);
-    tail_server->handle_request(request_str);
+
+    //Actual test
+    EXPECT_CALL(*head_server, connect_to_server("localhost", HEAD_PORT+1)).WillOnce(Return(NEXT_SERVER_FD+1));
+    head_server->handle_request(request_str);
 }
-*/
+
 int main(int argc, char** argv) {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();

@@ -35,7 +35,7 @@ class TestClientMethods(unittest.TestCase):
         Requests obj k1 again, which should load from cache
         """
         self.client.send_request = MagicMock()
-        self.client.wait_for_reply = MagicMock(return_value='{"HEAD": ["head_addr", "head_port"], "TAIL": ["tail_addr", "tail_port"]}')
+        self.client.get_reply = MagicMock(return_value='{"HEAD": ["head_addr", "head_port"], "TAIL": ["tail_addr", "tail_port"]}')
 
         self.assertEqual(self.client.get_servers('k1'), (('head_addr','head_port'), ('tail_addr','tail_port')))
         # Calling again to receive from cache
@@ -43,7 +43,7 @@ class TestClientMethods(unittest.TestCase):
         #assert send_request was only called once
         self.client.send_request.assert_called_once_with('k1', client_socket=self.client.master_socket)
 
-    def test_wait_for_reply(self):
+    def test_get_reply(self):
         # Mock a server that sends in bursts
         client_socket = MagicMock()
         orig_msg = 'hello there!'
@@ -56,7 +56,7 @@ class TestClientMethods(unittest.TestCase):
             return msg_to_send.encode()
 
         client_socket.recv = MagicMock(side_effect=send_replies)
-        self.assertEqual(self.client.wait_for_reply(client_socket), orig_msg)
+        self.assertEqual(self.client.get_reply(client_socket), orig_msg)
 
     def test_send_request(self):
         client_socket = MagicMock()

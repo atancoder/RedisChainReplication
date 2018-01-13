@@ -2,18 +2,22 @@ import socket
 import json
 MAX_VAL_SIZE = 1024
 MASTER_ADDR = ('localhost', 1338)
-REP_SERVER_ADDR = ('localhost', 1337)
 class Client:
     def __init__(self):
-        self.objID_to_addr = {"test_key": (REP_SERVER_ADDR, REP_SERVER_ADDR)} # Maps obj -> (Head server addr, Tail server addr) 
+        self.objID_to_addr = {}
         self.addr_to_socket = {} # Maps addr to socket (if exists)
         self.max_val_size = MAX_VAL_SIZE
         self.master_addr = MASTER_ADDR
         self.master_socket = socket.socket()
-        self.connect_to_master()
+
+        # To Do:
+        #self.connect_to_master()
 
     def connect_to_master(self):
         self.master_socket.connect(self.master_addr)
+
+    def set_obj_servers(self, obj, head_server, tail_server):
+        self.objID_to_addr[obj] = (head_server, tail_server)
 
     def get_servers(self, obj):
         """
@@ -22,13 +26,16 @@ class Client:
         Return HEAD server, TAIL server
         """
         if not obj in self.objID_to_addr:
+            """
             request = obj
             self.send_request(request,client_socket=self.master_socket)
-            reply = self.wait_for_reply(client_socket=self.master_socket)
+            reply = self.get_reply(client_socket=self.master_socket)
             reply = json.loads(reply)
             head_addr = tuple(i for i in reply['HEAD'])
             tail_addr = tuple(i for i in reply['TAIL'])
             self.objID_to_addr[obj] = (head_addr, tail_addr)
+            """
+            raise Exception("Not Yet Implemented")
         return self.objID_to_addr[obj]
 
     def background_check_for_master_update(self):
@@ -44,7 +51,7 @@ class Client:
         request = str(len(request)) + ' ' + request
         client_socket.sendall(request.encode())
 
-    def wait_for_reply(self, client_socket):
+    def get_reply(self, client_socket):
         reply = client_socket.recv(self.max_val_size).decode()
         separator = reply.find(' ')
         msg_len = int(reply[:separator])
@@ -79,7 +86,7 @@ class Client:
             self.send_request(string_command, head_socket)
 
         # Listen to TAIL for reply
-        reply = self.wait_for_reply(tail_socket)
+        reply = self.get_reply(tail_socket)
         return reply
 
 if __name__ == '__main__':
