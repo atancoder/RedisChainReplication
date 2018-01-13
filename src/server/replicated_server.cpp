@@ -1,10 +1,7 @@
 #include "replicated_server.h"
 
-ReplicatedServer::ReplicatedServer(int port, optional<pair<string, int>> next_server): Server(port) {
+ReplicatedServer::ReplicatedServer(int port): Server(port) {
     next_server_fd_ = -1;
-    if (next_server) {
-        next_server_fd_ = connect_to_server(next_server.value().first, next_server.value().second);
-    }
     redis_client_.connect();
 }
 

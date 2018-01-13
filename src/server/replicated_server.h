@@ -11,7 +11,7 @@ class ReplicatedServer : public Server
 {
 
 public:
-    ReplicatedServer (int port, optional<pair<string, int>> next_server);
+    ReplicatedServer (int port);
     void handle_request(string request_str);
     void handle_redis_request(Request::RedisRequest request, string orig_request_str);
     void handle_master_request(Request::MasterRequest request);

@@ -8,9 +8,10 @@ public:
     static string set_request;
     static string get_request;
     virtual void SetUp() {
-        tail_server = new MockReplicatedServer(SECOND_SERVER_PORT, optional<pair<string, int>>{});
-        pair<string, int> tail_addr("localhost", SECOND_SERVER_PORT);
-        head_server = new MockReplicatedServer(FIRST_SERVER_PORT, optional<pair<string, int>>{tail_addr});
+        tail_server = new MockReplicatedServer(TAIL_PORT);
+        pair<string, int> tail_addr("localhost", TAIL_PORT);
+        head_server = new MockReplicatedServer(HEAD_PORT);
+        head_server->update_next_server(optional<pair<string,int>> {tail_addr});
 
         Request::Address* client_addr = new Request::Address;
         client_addr->set_host(CLIENT_HOST);
@@ -72,16 +73,16 @@ TEST_F(ReplicatedServerTest, tail_handle_request) {
 }
 
 TEST_F(ReplicatedServerTest, modify_tail_server) {
-    tail_server->update_next_server(optional<pair<string, int>> {make_pair("localhost", THIRD_SERVER_PORT)});
+    tail_server->update_next_server(optional<pair<string, int>> {make_pair("localhost", TAIL_PORT+1)});
     EXPECT_CALL(*tail_server, send_msg(CLIENT_FD, "OK")).Times(0);
-    EXPECT_CALL(*tail_server, send_msg(SECOND_THIRD_FD, ReplicatedServerTest::set_request)).Times(1);
+    EXPECT_CALL(*tail_server, send_msg(NEXT_SERVER_FD, ReplicatedServerTest::set_request)).Times(1);
 
     tail_server->handle_request(ReplicatedServerTest::set_request);
 }
 
 TEST_F(ReplicatedServerTest, head_handle_request) {
     // Sends a set messsage to the head server
-    EXPECT_CALL(*head_server, send_msg(FIRST_SECOND_FD, ReplicatedServerTest::set_request)).Times(1);
+    EXPECT_CALL(*head_server, send_msg(NEXT_SERVER_FD, ReplicatedServerTest::set_request)).Times(1);
     head_server->handle_request(ReplicatedServerTest::set_request); //set k1 v1
 }
 /*
