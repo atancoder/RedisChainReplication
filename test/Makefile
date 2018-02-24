@@ -15,6 +15,7 @@ test: replicated_server redis
 	PYTHONPATH=../src/client python3 integration.py $(PORT) $(PORT)
 
 clean:
-	-kill $$(cat PIDS.log) # The - ignores errors
+# The - ignores errors
+	-kill $$(cat PIDS.log)
 	-rm PIDS.log
 

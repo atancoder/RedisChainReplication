@@ -1,5 +1,7 @@
 import socket
 import json
+import RepServer_client_pb2
+
 MAX_VAL_SIZE = 1024
 MASTER_ADDR = ('localhost', 1338)
 class Client:
@@ -66,8 +68,12 @@ class Client:
         Listens on the TAIL server for reply
         """
         command_args = string_command.split(' ')
-        action = command_args[0]
+        action = command_args[0].upper()
         obj = command_args[1]
+        val = None
+        if len(command_args) > 2:
+            val = command_args[2]
+
         HEAD_server, TAIL_server = self.get_servers(obj)
 
         if not TAIL_server in self.addr_to_socket:
@@ -76,14 +82,32 @@ class Client:
         tail_socket = self.addr_to_socket[TAIL_server]
 
         # Send request
-        if action.lower() == "get":
-            self.send_request(string_command, tail_socket)
-        elif action.lower() == "set":
+        # Set client_address
+        client_addr = RepServer_client_pb2.Request.Address()
+        client_host, client_port = tail_socket.getsockname()
+        client_addr.host, client_addr.port = client_host, client_port
+
+        # Setup RedisRequest
+        redis_request = RepServer_client_pb2.RedisRequest()
+        redis_request.client_addr = client_addr
+        redis_request.cmd = action
+        redis_request.key = obj
+        if val:
+            redis_request.val = val
+
+        request = RepServer_client_pb2.Request()
+        request.type = RepServer_client_pb2.Request.REDIS
+        request.redis = redis_request
+        request_str = SerializeToString(request)
+
+        if action == "GET":
+            self.send_request(request_str, tail_socket)
+        elif action == "SET":
             if not HEAD_server in self.addr_to_socket:
                 self.addr_to_socket[HEAD_server] = socket.socket()
                 self.addr_to_socket[HEAD_server].connect(HEAD_server)
             head_socket = self.addr_to_socket[HEAD_server]
-            self.send_request(string_command, head_socket)
+            self.send_request(request_str, head_socket)
 
         # Listen to TAIL for reply
         reply = self.get_reply(tail_socket)

@@ -1,0 +1,4 @@
+set test_key v1 : OK
+get test_key : v1
+set test_key v2 : OK
+get test_key : v2

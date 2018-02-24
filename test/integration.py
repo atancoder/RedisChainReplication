@@ -1,11 +1,4 @@
 from client import Client
-import sys
-
-assert len(sys.argv) == 3, "Must provide head port and tail port of replicated server. \
-                        Your arguments are {}".format(str(sys.argv))
-
-head_port = int(sys.argv[1])
-tail_port = int(sys.argv[2])
 
 def check_value(c, key, val):
     redis_val = c.command("get {}".format(key))
